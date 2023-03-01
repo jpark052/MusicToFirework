@@ -1,0 +1,19 @@
+1. focus on one integration method.
+
+2. mapping: pitch to color or force. freq -> force/magnitude curve (not just discrete value, but curve)
+
+3. Lifetime
+
+4. Underlying logic should be math
+
+5. Initial condition
+
+6. As far as you can go
+----
+
+MVP:
+1. MIDI play
+2. MIDI event print out based on music time
+3. Particle system looks like firework
+4. Firework displayed when midi happens
+5. focus on just one channel
