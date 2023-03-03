@@ -11,6 +11,22 @@ using Melanchall.DryWetMidi.Standards;
 using UnityEditor.VersionControl;
 using UnityEngine;
 
+public class NoteOn
+{
+    public string NoteName { get; set; }
+    public int NoteNumber { get; set; }
+    public float Time { get; set; }
+    public int Length { get; set; }
+
+    public NoteOn(string n, int nn , float t, int l)
+    {
+        NoteName = n;
+        NoteNumber = nn;
+        Time = (float)(t * 0.001);
+        Length = l;
+    }
+}
+
 public class MidiPlay : MonoBehaviour
 {
 
@@ -18,7 +34,9 @@ public class MidiPlay : MonoBehaviour
 
     private OutputDevice _outputDevice;
     private Playback _playback;
-
+    private List<NoteOn> noteOnList = new List<NoteOn>();
+    [SerializeField] ParticleSystem myparticle = null;
+    private float x_movement = 0.005f;
     // Start is called before the first frame update
     void Start()
     {
@@ -26,21 +44,51 @@ public class MidiPlay : MonoBehaviour
         var myFile = MidiFile.Read("Assets/MidiFiles/debussy-clair-de-lune.mid");
         //var midiFile = CreateTestFile();
         InitializeFilePlayback(myFile);
+
+        var tempoMap = myFile.GetTempoMap();
+        IEnumerable<Note> notes = myFile.GetNotes();
+
+        foreach (Note note in notes)
+        {
+            var timeInMilliSeconds = ((TimeSpan)note.TimeAs<MetricTimeSpan>(tempoMap)).TotalMilliseconds;
+            var lengthInSeconds = ((TimeSpan)note.LengthAs<MetricTimeSpan>(tempoMap)).TotalSeconds;
+            //Debug.Log("notenum: " + note.NoteName + "  " + timeInSeconds + "  " + lengthInSeconds);
+
+            NoteOn noteOn = new NoteOn(note.NoteName.ToString(), note.NoteNumber, (float)timeInMilliSeconds, (int)lengthInSeconds);
+            noteOnList.Add(noteOn);
+
+            // Debug.Log(note.ToString());
+            //Debug.Log("notenum: " + note.NoteNumber +
+            //    " notename: " + note.NoteName +
+            //    " length: " + note.Length +
+            //    " time: " + note.TimeAs<MetricTimeSpan>(tempoMap).TotalMilliseconds +
+            //    " velocity: " + note.Velocity);
+
+        }
+
         StartPlayback();
-
-        //IEnumerable<Note> notes = myFile.GetNotes();
-
-        //foreach (Note note in notes)
-        //{
-        //    Debug.Log("NoteNum: " + note.NoteNumber + " NoteName: " + note.NoteName + " Length: " + note.Length);
-        //}
-
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        transform.Translate(x_movement, 0, 0);
+        if (Mathf.Abs(transform.position.x) >= 8)
+        {
+            x_movement = -x_movement;
+        }
+        NoteOn firstNote = noteOnList.First();
+        if (firstNote.Time <= (Time.time))
+        {
+            BurstIt();
+            noteOnList.Remove(firstNote);
+        }
+
+    }
+
+    public void BurstIt()
+    {
+        myparticle.Play();
     }
 
     private void OnApplicationQuit()
@@ -121,7 +169,6 @@ public class MidiPlay : MonoBehaviour
 
     private void OnNotesPlaybackStarted(object sender, NotesEventArgs e)
     {
-        
         LogNotes("Notes started:", e);
     }
 
@@ -132,16 +179,7 @@ public class MidiPlay : MonoBehaviour
             .AppendLine(title)
             .AppendLine(string.Join(Environment.NewLine, e.Notes.Select(n => $"  {n}")))
             .ToString();
-        Debug.Log(message.Trim());
-        var message2 = new StringBuilder()
-            .AppendLine(title)
-         .AppendLine(string.Join(Environment.NewLine, e.Notes.Select(n => $"  {n.Velocity}")))
-         .ToString();
-        Debug.Log(message2.Trim());
+        //Debug.Log(message.Trim());
 
-
-        //Debug.Log("log event");
-        // Debug.Log(message.Trim() + e.Notes.Select(n => $" Note Velocity:  {n.Velocity}"));
-        //Debug.Log(e.Notes.Select(n => $"Note Velocity:  {n.Velocity.ToString()}"));
     }
 }

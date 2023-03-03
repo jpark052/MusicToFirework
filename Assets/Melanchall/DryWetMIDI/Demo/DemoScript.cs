@@ -15,13 +15,21 @@ public class DemoScript : MonoBehaviour
 
     private OutputDevice _outputDevice;
     private Playback _playback;
+    float initialTime;
 
     private void Start()
     {
         InitializeOutputDevice();
         var midiFile = CreateTestFile();
         InitializeFilePlayback(midiFile);
+        initialTime = Time.time;
+
         StartPlayback();
+    }
+
+    void Update()
+    {
+        Debug.Log(Time.time);
     }
 
     private void OnApplicationQuit()
