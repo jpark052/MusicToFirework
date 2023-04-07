@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,8 +9,8 @@ using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
 using Melanchall.DryWetMidi.Multimedia;
 using Melanchall.DryWetMidi.Standards;
-using UnityEditor.VersionControl;
 using UnityEngine;
+using UnityEngine.VFX;
 
 public class NoteOn
 {
@@ -29,9 +30,12 @@ public class NoteOn
 
 public class MidiPlay : MonoBehaviour
 {
-
+    [SerializeField] private VisualEffect visualEffect;
+    //private static readonly int ColorPropertyID = Shader.PropertyToID("_Color");
+    //public SpawnEvent parentSpawnEvent;
+    public ParticleSystem ppp;
     private const string OutputDeviceName = "Microsoft GS Wavetable Synth";
-
+    private IEnumerator coroutine;
     private OutputDevice _outputDevice;
     private Playback _playback;
     private List<NoteOn> noteOnList = new List<NoteOn>();
@@ -65,30 +69,55 @@ public class MidiPlay : MonoBehaviour
             //    " velocity: " + note.Velocity);
 
         }
+        
 
-        StartPlayback();
+        while (!visualEffect.isActiveAndEnabled)
+        {
+
+        }
+        StartCoroutine("StartPlayback");
+
+        //StartPlayback();
     }
 
     // Update is called once per frame
     void Update()
     {
-        transform.Translate(x_movement, 0, 0);
-        if (Mathf.Abs(transform.position.x) >= 8)
-        {
-            x_movement = -x_movement;
-        }
+
         NoteOn firstNote = noteOnList.First();
         if (firstNote.Time <= (Time.time))
         {
-            BurstIt();
+            //ppp = visualEffect.gameObject;
+
+            visualEffect.Play();
+            var list = new List<string>();
+            visualEffect.GetParticleSystemNames(list);
+            // var explosion = visualEffect.GetParticleSystemInfo(list[1]);
+            //var vinfo = visualEffect.GetSpawnSystemInfo(list[0]);
+            
+            //ppp = visualEffect.gameObject.transform.Find(list[1]).GetComponent<ParticleSystem>();
+
+            // Print the names of all the particle systems in the Visual Effect
+            //foreach (string name in list)
+            //{
+            //    Debug.Log("Particle System Name: " + name);
+            //}
+            //BurstIt();
             noteOnList.Remove(firstNote);
         }
-
+        //visualEffect.SendEvent("OnPlay");
+        //visualEffect.Play();
+        //Debug.Log(visualEffect.initialEventName);
     }
+
 
     public void BurstIt()
     {
-        myparticle.Play();
+        //GetComponent<VisualEffect>().Play();
+        //visualEffect.Play();
+        //visualEffect.SendEvent("ProjectileSys");
+        Debug.Log("Bursting!");
+        //myparticle.Play();
     }
 
     private void OnApplicationQuit()
