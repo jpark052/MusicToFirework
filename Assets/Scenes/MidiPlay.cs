@@ -18,13 +18,14 @@ public class NoteOn
     public int NoteNumber { get; set; }
     public float Time { get; set; }
     public int Length { get; set; }
-
-    public NoteOn(string n, int nn , float t, int l)
+    public  Color color { get; set; }
+    public NoteOn(string n, int nn , float t, int l, Color c)
     {
         NoteName = n;
         NoteNumber = nn;
         Time = (float)(t * 0.001);
         Length = l;
+        color = c;
     }
 }
 
@@ -56,18 +57,18 @@ public class MidiPlay : MonoBehaviour
         {
             var timeInMilliSeconds = ((TimeSpan)note.TimeAs<MetricTimeSpan>(tempoMap)).TotalMilliseconds;
             var lengthInSeconds = ((TimeSpan)note.LengthAs<MetricTimeSpan>(tempoMap)).TotalSeconds;
-            //Debug.Log("notenum: " + note.NoteName + "  " + timeInSeconds + "  " + lengthInSeconds);
-
-            NoteOn noteOn = new NoteOn(note.NoteName.ToString(), note.NoteNumber, (float)timeInMilliSeconds, (int)lengthInSeconds);
+            //Debug.Log("notenum: " + note.NoteName + lengthInSeconds);
+            Color c = GetRainbowColor(note.NoteNumber, (int)lengthInSeconds);
+            NoteOn noteOn = new NoteOn(note.NoteName.ToString(), note.NoteNumber, (float)timeInMilliSeconds, (int)lengthInSeconds, c);
             noteOnList.Add(noteOn);
-
-            // Debug.Log(note.ToString());
+            
+            //Debug.Log("r: " + c.r + " g:" + c.g + " b:" + c.b);
             //Debug.Log("notenum: " + note.NoteNumber +
             //    " notename: " + note.NoteName +
             //    " length: " + note.Length +
             //    " time: " + note.TimeAs<MetricTimeSpan>(tempoMap).TotalMilliseconds +
             //    " velocity: " + note.Velocity);
-
+           
         }
         
 
@@ -75,9 +76,9 @@ public class MidiPlay : MonoBehaviour
         {
 
         }
-        StartCoroutine("StartPlayback");
+        //StartCoroutine("StartPlayback");
 
-        //StartPlayback();
+        StartPlayback();
     }
 
     // Update is called once per frame
@@ -87,38 +88,57 @@ public class MidiPlay : MonoBehaviour
         NoteOn firstNote = noteOnList.First();
         if (firstNote.Time <= (Time.time))
         {
-            //ppp = visualEffect.gameObject;
 
-            visualEffect.Play();
-            var list = new List<string>();
-            visualEffect.GetParticleSystemNames(list);
-            // var explosion = visualEffect.GetParticleSystemInfo(list[1]);
-            //var vinfo = visualEffect.GetSpawnSystemInfo(list[0]);
+            var main = myparticle.main;
+            main.startColor = firstNote.color;
             
-            //ppp = visualEffect.gameObject.transform.Find(list[1]).GetComponent<ParticleSystem>();
-
-            // Print the names of all the particle systems in the Visual Effect
-            //foreach (string name in list)
-            //{
-            //    Debug.Log("Particle System Name: " + name);
-            //}
-            //BurstIt();
+            //visualEffect.Play();
+            BurstIt();
             noteOnList.Remove(firstNote);
         }
-        //visualEffect.SendEvent("OnPlay");
-        //visualEffect.Play();
-        //Debug.Log(visualEffect.initialEventName);
     }
 
 
     public void BurstIt()
     {
-        //GetComponent<VisualEffect>().Play();
-        //visualEffect.Play();
-        //visualEffect.SendEvent("ProjectileSys");
-        Debug.Log("Bursting!");
-        //myparticle.Play();
+        myparticle.Play();
     }
+
+    public static Color GetRainbowColor(int a, int b)
+    {
+        int r = 0, g = 0, bl = 0;
+
+        if (a < 43)
+        {
+            r = 255 - (a - 21) * 6;
+            bl = 255;
+        }
+        else if (a < 65)
+        {
+            r = 0;
+            bl = 255;
+            g = (a - 43) * 6;
+        }
+        else if (a < 87)
+        {
+            r = 0;
+            g = 255;
+            bl = 255 - (a - 65) * 6;
+        }
+        else
+        {
+            g = 255;
+            bl = 0;
+            r = (a - 87) * 6;
+        }
+
+        // Adjust for whiteness
+        r = (int)(r + (255 - r) * b / 100.0);
+        g = (int)(g + (255 - g) * b / 100.0);
+        bl = (int)(bl + (255 - bl) * b / 100.0);
+        return new Color(r / 255f, g / 255f, bl / 255f);
+    }
+
 
     private void OnApplicationQuit()
     {

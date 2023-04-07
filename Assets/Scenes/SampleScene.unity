@@ -153,8 +153,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da8d7d18e489724589d430f02809e3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  visualEffect: {fileID: 406520182}
-  myparticle: {fileID: 0}
+  visualEffect: {fileID: 0}
+  ppp: {fileID: 0}
+  myparticle: {fileID: 502714012}
 --- !u!81 &352715642
 AudioListener:
   m_ObjectHideFlags: 0
