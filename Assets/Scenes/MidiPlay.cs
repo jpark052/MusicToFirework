@@ -41,7 +41,8 @@ public class MidiPlay : MonoBehaviour
     private Playback _playback;
     private List<NoteOn> noteOnList = new List<NoteOn>();
     [SerializeField] ParticleSystem myparticle = null;
-    private float x_movement = 0.005f;
+    private float x_movement = 0.5f;
+    private float y_movement = 0.5f;
     // Start is called before the first frame update
     void Start()
     {
@@ -58,7 +59,7 @@ public class MidiPlay : MonoBehaviour
             var timeInMilliSeconds = ((TimeSpan)note.TimeAs<MetricTimeSpan>(tempoMap)).TotalMilliseconds;
             var lengthInSeconds = ((TimeSpan)note.LengthAs<MetricTimeSpan>(tempoMap)).TotalSeconds;
             //Debug.Log("notenum: " + note.NoteName + lengthInSeconds);
-            Color c = GetRainbowColor(note.NoteNumber, (int)lengthInSeconds);
+            Color c = GetRainbowColor2(note.NoteName.ToString(), (int)lengthInSeconds);
             NoteOn noteOn = new NoteOn(note.NoteName.ToString(), note.NoteNumber, (float)timeInMilliSeconds, (int)lengthInSeconds, c);
             noteOnList.Add(noteOn);
             
@@ -84,6 +85,17 @@ public class MidiPlay : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        transform.Translate(x_movement, 0, 0);
+        transform.Translate(0, y_movement, 0);
+        if (Mathf.Abs(transform.position.x) >= 8)
+        {
+            x_movement = -x_movement;
+        }
+
+        if (Mathf.Abs(transform.position.y) >= 2)
+        {
+            y_movement = -y_movement;
+        }
 
         NoteOn firstNote = noteOnList.First();
         if (firstNote.Time <= (Time.time))
@@ -95,6 +107,18 @@ public class MidiPlay : MonoBehaviour
             //visualEffect.Play();
             BurstIt();
             noteOnList.Remove(firstNote);
+
+            transform.Translate(x_movement, 0, 0);
+            transform.Translate(0, y_movement, 0);
+            if (Mathf.Abs(transform.position.x) >= 8)
+            {
+                x_movement = -x_movement;
+            }
+
+            if (Mathf.Abs(transform.position.y) >= 3)
+            {
+                y_movement = -y_movement;
+            }
         }
     }
 
@@ -104,41 +128,86 @@ public class MidiPlay : MonoBehaviour
         myparticle.Play();
     }
 
-    public static Color GetRainbowColor(int a, int b)
+    public static Color GetRainbowColor(int pitch, int velocity)
     {
-        int r = 0, g = 0, bl = 0;
 
-        if (a < 43)
+        int r = Math.Min(255, Math.Max(0, (108 - pitch) * (255 / 43)));
+        int g = Math.Min(255, Math.Max(0, (pitch - 21) * (255 / 44)));
+        int b = Math.Min(255, Math.Max(0, (pitch - 21) * (255 / 87)));
+
+        // Adjust for whiteness
+        r = (int)(r + (255 - r) * velocity / 100.0);
+        g = (int)(g + (255 - g) * velocity / 100.0);
+        b = (int)(b + (255 - b) * velocity / 100.0);
+        return new Color(r / 255f, g / 255f, b / 255f);
+    }
+
+    public static Color GetRainbowColor2(string x, int velocity)
+    {
+        // Define a dictionary that maps each note to its corresponding pitch value
+        Dictionary<string, double> pitchValues = new Dictionary<string, double>
+    {
+        { "C", 0 },
+        { "CSharp", 1 },
+        { "D", 2 },
+        { "DSharp", 3 },
+        { "E", 4 },
+        { "ESharp", 5 },
+        { "F", 5 },
+        { "FSharp", 6 },
+        { "G", 7 },
+        { "GSharp", 8 },
+        { "A", 9 },
+        { "ASharp", 10 },
+        { "B", 11 },
+        { "BSharp", 12 }
+    };
+
+        // Get the pitch value of the given note
+        double pitch = pitchValues[x];
+
+        // Map the pitch value to a hue value in the range 0-360 degrees
+        double hue = pitch / 12.0 * 360.0;
+
+        // Convert the hue value to an RGB color
+        return ColorFromHSL(hue, 1.0, 0.5, velocity);
+    }
+
+    // Helper function to convert HSL values to RGB color
+    private static Color ColorFromHSL(double h, double s, double l, int velocity)
+    {
+        h /= 360.0;
+        double r = 0, g = 0, b = 0;
+        if (s == 0)
         {
-            r = 255 - (a - 21) * 6;
-            bl = 255;
-        }
-        else if (a < 65)
-        {
-            r = 0;
-            bl = 255;
-            g = (a - 43) * 6;
-        }
-        else if (a < 87)
-        {
-            r = 0;
-            g = 255;
-            bl = 255 - (a - 65) * 6;
+            r = g = b = l;
         }
         else
         {
-            g = 255;
-            bl = 0;
-            r = (a - 87) * 6;
+            double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            double p = 2 * l - q;
+            r = HueToRGB(p, q, h + 1.0 / 3.0);
+            g = HueToRGB(p, q, h);
+            b = HueToRGB(p, q, h - 1.0 / 3.0);
         }
 
-        // Adjust for whiteness
-        r = (int)(r + (255 - r) * b / 100.0);
-        g = (int)(g + (255 - g) * b / 100.0);
-        bl = (int)(bl + (255 - bl) * b / 100.0);
-        return new Color(r / 255f, g / 255f, bl / 255f);
+        //r = (int)(r + (255 - r) * velocity / 100.0);
+        //g = (int)(g + (255 - g) * velocity / 100.0);
+        //b = (int)(b + (255 - b) * velocity / 100.0);
+        return new Color((int)(255 * r), (int)(255 * g), (int)(255 * b));
+        //return Color.FromArgb((int)(255 * r), (int)(255 * g), (int)(255 * b));
     }
 
+    // Helper function to convert hue value to RGB value
+    private static double HueToRGB(double p, double q, double t)
+    {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1.0 / 6.0) return p + (q - p) * 6.0 * t;
+        if (t < 1.0 / 2.0) return q;
+        if (t < 2.0 / 3.0) return p + (q - p) * (2.0 / 3.0 - t) * 6.0;
+        return p;
+    }
 
     private void OnApplicationQuit()
     {
