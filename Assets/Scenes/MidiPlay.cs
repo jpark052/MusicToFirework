@@ -71,14 +71,6 @@ public class MidiPlay : MonoBehaviour
             //    " velocity: " + note.Velocity);
            
         }
-        
-
-        while (!visualEffect.isActiveAndEnabled)
-        {
-
-        }
-        //StartCoroutine("StartPlayback");
-
         StartPlayback();
     }
 
