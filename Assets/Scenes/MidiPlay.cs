@@ -18,13 +18,15 @@ public class NoteOn
     public int NoteNumber { get; set; }
     public float Time { get; set; }
     public int Length { get; set; }
+    public int Velocity { get; set; }
     public  Color color { get; set; }
-    public NoteOn(string n, int nn , float t, int l, Color c)
+    public NoteOn(string n, int nn , float t, int l, int v, Color c)
     {
         NoteName = n;
         NoteNumber = nn;
         Time = (float)(t * 0.001);
         Length = l;
+        Velocity = v;
         color = c;
     }
 }
@@ -48,6 +50,8 @@ public class MidiPlay : MonoBehaviour
     {
         InitializeOutputDevice();
         var myFile = MidiFile.Read("Assets/MidiFiles/debussy-clair-de-lune.mid");
+        //var myFile = MidiFile.Read("Assets/MidiFiles/thenights.mid");
+        //var myFile = MidiFile.Read("Assets/MidiFiles/HotelCalifornia.mid");
         //var midiFile = CreateTestFile();
         InitializeFilePlayback(myFile);
 
@@ -56,11 +60,13 @@ public class MidiPlay : MonoBehaviour
 
         foreach (Note note in notes)
         {
+            //Debug.Log(note.Velocity);
+            
             var timeInMilliSeconds = ((TimeSpan)note.TimeAs<MetricTimeSpan>(tempoMap)).TotalMilliseconds;
             var lengthInSeconds = ((TimeSpan)note.LengthAs<MetricTimeSpan>(tempoMap)).TotalSeconds;
             //Debug.Log("notenum: " + note.NoteName + lengthInSeconds);
             Color c = GetRainbowColor2(note.NoteName.ToString(), (int)lengthInSeconds);
-            NoteOn noteOn = new NoteOn(note.NoteName.ToString(), note.NoteNumber, (float)timeInMilliSeconds, (int)lengthInSeconds, c);
+            NoteOn noteOn = new NoteOn(note.NoteName.ToString(), note.NoteNumber, (float)timeInMilliSeconds, (int)lengthInSeconds, note.Velocity ,c);
             noteOnList.Add(noteOn);
             
             //Debug.Log("r: " + c.r + " g:" + c.g + " b:" + c.b);
@@ -95,9 +101,9 @@ public class MidiPlay : MonoBehaviour
 
             var main = myparticle.main;
             main.startColor = firstNote.color;
-            
-            //visualEffect.Play();
-            BurstIt();
+            main.startSpeed = (ParticleSystem.MinMaxCurve)(firstNote.Velocity * 0.1 * 0.5);
+
+            myparticle.Play();
             noteOnList.Remove(firstNote);
 
             transform.Translate(x_movement, 0, 0);
@@ -114,11 +120,6 @@ public class MidiPlay : MonoBehaviour
         }
     }
 
-
-    public void BurstIt()
-    {
-        myparticle.Play();
-    }
 
     public static Color GetRainbowColor(int pitch, int velocity)
     {
@@ -186,7 +187,8 @@ public class MidiPlay : MonoBehaviour
         //r = (int)(r + (255 - r) * velocity / 100.0);
         //g = (int)(g + (255 - g) * velocity / 100.0);
         //b = (int)(b + (255 - b) * velocity / 100.0);
-        return new Color((int)(255 * r), (int)(255 * g), (int)(255 * b));
+        //return new Color((int)(255 * r), (int)(255 * g), (int)(255 * b));
+        return new Color((int)(255 * r), (int)(255 * g), (int)(255 * b)) * 1.5f; ;
         //return Color.FromArgb((int)(255 * r), (int)(255 * g), (int)(255 * b));
     }
 
